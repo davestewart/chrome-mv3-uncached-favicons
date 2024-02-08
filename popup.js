@@ -1,27 +1,15 @@
 // ---------------------------------------------------------------------------------------------------------------------
-// loader
+// main helper
 // ---------------------------------------------------------------------------------------------------------------------
 
 /**
- * Icon Loader
+ * Icon Tester
  *
- * Queries Chrome's cache for an icon, and may return:
- *
- * - URL
- * - HTMLImageElement
- * - undefined
- *
- * @usage:
- *
- *  const loadIcon = makeIconLoader(32, true)
- *  const image = await loadIcon('google.com')
- *  if (image) { ... }
- *  else { ... }
+ * Tests Chrome's favicons to see if they're missing.
  *
  * @param   {number}    size          Default icon size
- * @returns {(function(*): Promise<HTMLImageElement|string|undefined>)|*}
  */
-function makeIconLoader (size = 16) {
+function makeIconTester (size = 16) {
 
   // -------------------------------------------------------------------------------------------------------------------
   // private
@@ -114,7 +102,7 @@ function makeIconLoader (size = 16) {
    * @param   {HTMLImageElement}  image
    * @returns {Promise<boolean>}
    */
-  function initIcon (image) {
+  function testIcon (image) {
     return new Promise(function (resolve) {
       image.addEventListener('load', function onLoad () {
         image.removeEventListener('load', onLoad)
@@ -126,13 +114,13 @@ function makeIconLoader (size = 16) {
   // return the load icon function
   return {
     init,
-    initIcon,
+    testIcon,
     getIconUrl,
   }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// utils
+// demo utils
 // ---------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -213,11 +201,11 @@ function fetchFavIcon (domain, timeout = 5000) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// app
+// demo
 // ---------------------------------------------------------------------------------------------------------------------
 
 // instantiate the loader
-const loader = makeIconLoader()
+const iconTester = makeIconTester()
 
 /*
   This code:
@@ -226,10 +214,10 @@ const loader = makeIconLoader()
   - grab domains
   - loads favicons
 
-  In the main loop, the initIcon() function:
+  In the main loop, the testIcon() function:
 
   - attaches a load listener
-  - on load, compares the loaded icon to the missing icon
+  - on load, compares the loaded icon to a known missing icon
   - returns the result
   - adds a red outline to missing icons
 
@@ -254,7 +242,7 @@ chrome.bookmarks.getTree(async function (bookmarks) {
   const totalBookmarks = countBookmarks(root)
 
   // prepare missing data
-  await loader.init()
+  await iconTester.init()
 
   // stats
   let missing = 0
@@ -271,7 +259,7 @@ chrome.bookmarks.getTree(async function (bookmarks) {
   for (const domain of domains) {
     // create image
     const img = document.createElement('img')
-    img.src = loader.getIconUrl(domain)
+    img.src = iconTester.getIconUrl(domain)
     img.title = domain
     document.body.appendChild(img)
 
@@ -292,8 +280,8 @@ chrome.bookmarks.getTree(async function (bookmarks) {
       }
     })
 
-    // missing icon listener
-    loader.initIcon(img).then(isMissing => {
+    // tests for missing icon on icon load
+    iconTester.testIcon(img).then(isMissing => {
       // highlight missing
       if (isMissing) {
         img.classList.add('missing')
