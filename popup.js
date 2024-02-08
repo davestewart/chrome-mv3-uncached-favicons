@@ -15,14 +15,12 @@ function makeIconTester (size = 16) {
   // private
   // -------------------------------------------------------------------------------------------------------------------
 
-  // setup canvas
+  // canvas
   const canvas = document.createElement('canvas')
   canvas.width = size
   canvas.height = size
   const context = canvas.getContext('2d', { alpha: false })
-
-  // set up missing
-  let missingData
+  let missingData = ''
 
   /**
    * Converts an image to a data URL
@@ -33,7 +31,9 @@ function makeIconTester (size = 16) {
    */
   function getDataUrl (image) {
     context.clearRect(0, 0, canvas.width, canvas.height)
-    context.drawImage(image, 0, 0)
+    context.drawImage(image, canvas.width, 0)
+
+    // this is the "slow" bit
     return canvas.toDataURL()
   }
 
@@ -74,10 +74,10 @@ function makeIconTester (size = 16) {
    * Test if image data is the same as missing data
    *
    * @param   {HTMLImageElement}  image
-   * @returns {Promise<boolean>}
+   * @returns {boolean}
    * @private
    */
-  async function testImage (image) {
+  function compareImage (image) {
     const imageData = getDataUrl(image)
     return imageData === missingData
   }
@@ -97,16 +97,19 @@ function makeIconTester (size = 16) {
   }
 
   /**
-   * Checks if a loaded icon image is the same as a missing icon
+   * Checks if image icon data is the same as a missing icon image data
    *
    * @param   {HTMLImageElement}  image
    * @returns {Promise<boolean>}
    */
-  function testIcon (image) {
+  async function testIcon (image) {
+    if (image.complete) {
+      return compareImage(image)
+    }
     return new Promise(function (resolve) {
       image.addEventListener('load', function onLoad () {
         image.removeEventListener('load', onLoad)
-        testImage(image).then(resolve)
+        resolve(compareImage(image))
       })
     })
   }
@@ -142,7 +145,7 @@ function countBookmarks (bookmark) {
 
 
 /**
- * Loads bookmarks and gets the first n domains
+ * Gets unique bookmark domains
  *
  * @param   {BookmarkTreeNode}  bookmark    Initial bookmark tree to grab domains from
  * @param   {number}            limit       Limit the number of domains returned
@@ -204,37 +207,10 @@ function fetchFavIcon (domain, timeout = 5000) {
 // demo
 // ---------------------------------------------------------------------------------------------------------------------
 
-// instantiate the loader
+// instantiate tester
 const iconTester = makeIconTester()
 
-/*
-  This code:
-
-  - load bookmarks
-  - grab domains
-  - loads favicons
-
-  In the main loop, the testIcon() function:
-
-  - attaches a load listener
-  - on load, compares the loaded icon to a known missing icon
-  - returns the result
-  - adds a red outline to missing icons
-
-  You can then:
-
-  - attempt to load the missing icon:
-    - Click the missing icon
-    - this loads the tab and grab the favicon as soon as it is ready
-    - this will add the icon to chrome's cache
-  - load the tab and manually check
-    - Ctrl/Cmd+Click a missing icon
-    - check the tab to see if the site loaded or not
-
-  Finally:
-
-  - right-click and inspect the popup for debug info
- */
+// display bookmark icons
 chrome.bookmarks.getTree(async function (bookmarks) {
   // grab domains
   const root = bookmarks[0]
@@ -271,10 +247,11 @@ chrome.bookmarks.getTree(async function (bookmarks) {
       }
 
       // normal click - attempt to load favicon by opening tab
-      else {
+      else if (img.classList.contains('missing')) {
         const favIconUrl = await fetchFavIcon(domain)
         console.log(`Favicon for ${domain}: ${favIconUrl}`)
         if (favIconUrl) {
+          img.classList.remove('missing')
           img.src = favIconUrl
         }
       }

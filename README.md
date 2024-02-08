@@ -4,11 +4,31 @@ This sample demonstrates a way to detect non-cached favicons.
 
 ## Overview
 
-The approach to detect non-cached icons is to load a missing icon, convert it into a `data://` url, then when new icons are loaded, convert their image data into a `data://` url, and compare the two.
+The approach is to compare the `data://` URL of a loaded icon image to the `data://` URL of a known missing icon image.
 
-The demo uses the user's own bookmarks to do this. I've recently transferred machines, so I have 1000s of uncached bookmarks. You may need to import some bookmarks from another computer to test if you don't have any uncached.
+The helper code does this by passing a reference to a function and reporting the result on load:
 
-In the demo, missing icons are outlined in red, just to prove that they can be detected:
+```js
+// create the helper
+const tester = makeIconTester()
+
+// initialize with missing icon
+await tester.init()
+
+// load image
+const image = document.createElement('img')
+img.src = tester.getIconUrl('google.com')
+
+// wait for load
+const missing = await tester.testIcon(image)
+if (missing) {
+  // ...
+}
+```
+
+The demo uses the user's own bookmarks to do this. I've recently transferred machines, so I have 1000s of uncached bookmarks (you may need to import some bookmarks from another computer to test if you don't have any uncached).
+
+Missing icons are outlined in red (just to prove that they can be detected):
 
 ![screenshot](screenshot.png)
 
@@ -19,7 +39,7 @@ You can then:
 
 ## Performance
 
-The approach is certainly slower than the initial load of cached bookmarks, however it seems to be fast-enough that on a screen of perhaps 20-30 bookmarks it would not be noticeable.
+The approach is certainly slower than the initial load of cached bookmarks, however it seems to be fast-enough that on a screen of perhaps 50 or so bookmarks it would not be noticeable on initial paint.
 
 In the screenshot above my (admittedly, blazing-fast M3) it takes about 1.5 seconds to process all the nearly 2000 individual domains in nearly 7000 bookmarks:
 
@@ -38,11 +58,11 @@ The tough bit of this problem is, what to do about the missing icons?
 
 The demo lets you click an icon to attempt to load the tab and grab it from the `Tab::onUpdated` event. This is pretty intrusive, so alternative methods would be welcome, perhaps:
 
-- do it in a hidden window
-- make an http call
-- use an offscreen document (I know it [supports scraping](https://developer.chrome.com/docs/extensions/reference/api/offscreen#reasons:~:text=%22-,DOM_SCRAPING,-%22%0ASpecifies%20that), but not sure if favicons are loaded automatically)
+- do it in a minimised window
+- make an `http` call
+- use an offscreen document (I know it [supports scraping](https://stackoverflow.com/a/76268724), but not sure if favicons are loaded automatically)
 
-Perhaps missing icon URLs could be loaded and cached in an additional registry, and removed when pages are loaded in future (though this would require the `tabs` permission).
+Perhaps missing icon URLs could be loaded and cached in an internal registry, then removed when pages are loaded in future (though this would require the `tabs` permission).
 
 Anyway, just ideas.
 
