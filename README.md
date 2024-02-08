@@ -6,7 +6,7 @@ This sample demonstrates a way to detect non-cached favicons.
 
 The approach is to compare the `data://` URL of a loaded icon image to the `data://` URL of a known missing icon image.
 
-The helper code does this by passing a reference to a function and reporting the result on load:
+Here's how that looks in code:
 
 ```js
 // create the helper
@@ -15,13 +15,13 @@ const tester = makeIconTester()
 // initialize with missing icon
 await tester.init()
 
-// load image
+// create and load icon
 const image = document.createElement('img')
 img.src = tester.getIconUrl('google.com')
 
-// wait for load
-const missing = await tester.testIcon(image)
-if (missing) {
+// monitor load
+const isMissing = await tester.testIcon(image)
+if (isMissing) {
   // ...
 }
 ```
