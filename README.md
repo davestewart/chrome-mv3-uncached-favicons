@@ -1,0 +1,54 @@
+# Favicon with 404
+
+This sample demonstrates a way to detect non-cached favicons.
+
+## Overview
+
+The approach to detect non-cached icons is to load a missing icon, convert it into a `data://` url, then when new icons are loaded, convert their image data into a `data://` url, and compare the two.
+
+The demo uses the user's own bookmarks to do this. I've recently transferred machines, so I have 1000s of uncached bookmarks. You may need to import some bookmarks from another computer to test if you don't have any uncached.
+
+In the demo, missing icons are outlined in red, just to prove that they can be detected:
+
+![screenshot](screenshot.png)
+
+You can then:
+
+- `Click` the icon to open a tab, grab the favicon url, and update the icon
+- `Ctrl/Cmd+Click` the icon to open a tab, just to check if the page has loaded.
+
+## Performance
+
+The approach is certainly slower than the initial load of cached bookmarks, however it seems to be fast-enough that on a screen of perhaps 20-30 bookmarks it would not be noticeable.
+
+In the screenshot above my (admittedly, blazing-fast M3) it takes about 1.5 seconds to process all the nearly 2000 individual domains in nearly 7000 bookmarks:
+
+```
+counted 6978 bookmarks
+processed 1958 icons in 1429ms
+  - missing: 1273
+  - added: 685
+```
+
+This is **way more** than would be comfortably displayed on screen at once, in any such bookmarking tool.
+
+## Loading missing icons
+
+The tough bit of this problem is, what to do about the missing icons?
+
+The demo lets you click an icon to attempt to load the tab and grab it from the `Tab::onUpdated` event. This is pretty intrusive, so alternative methods would be welcome, perhaps:
+
+- do it in a hidden window
+- make an http call
+- use an offscreen document (I know it [supports scraping](https://developer.chrome.com/docs/extensions/reference/api/offscreen#reasons:~:text=%22-,DOM_SCRAPING,-%22%0ASpecifies%20that), but not sure if favicons are loaded automatically)
+
+Perhaps missing icon URLs could be loaded and cached in an additional registry, and removed when pages are loaded in future (though this would require the `tabs` permission).
+
+Anyway, just ideas.
+
+## Running this extension
+
+1. Clone this repository.
+2. Load this directory in Chrome as an [unpacked extension](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
+3. Pin the extension to the taskbar to access the action button.
+4. Open the extension popup by clicking the action button.
