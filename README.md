@@ -72,3 +72,7 @@ Anyway, just ideas.
 2. Load this directory in Chrome as an [unpacked extension](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
 3. Pin the extension to the taskbar to access the action button.
 4. Open the extension popup by clicking the action button.
+
+## Notes
+
+See original Google Groups [discussion](https://groups.google.com/a/chromium.org/g/chromium-extensions/c/5FYfba0D9ck/m/BGH0hZRAAQAJ).
